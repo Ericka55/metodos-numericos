@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Solver Métodos Numéricos PRO+</title>
+
+<style>
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#1e3c72,#2a5298);
+    color:white;
+    text-align:center;
+}
+
+.container{
+    background:white;
+    color:black;
+    width:90%;
+    max-width:900px;
+    margin:20px auto;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 15px 40px rgba(0,0,0,.4)
+}
+
+h1{margin-bottom:5px;color:#2a5298}
+.subtitle{color:#555;margin-bottom:15px}
+
+input{
+    width:60px;
+    margin:3px;
+    padding:6px;
+    text-align:center;
+    border-radius:8px;
+    border:1px solid #ccc
+}
+
+select,button{
+    margin-top:10px;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    font-weight:bold;
+}
+
+button{
+    background:#2a5298;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{background:#1e3c72}
+
+.section-box{
+    margin-top:20px;
+    padding:15px;
+    border-radius:12px;
+    background:#f4f6fb;
+    text-align:left
+}
+
+.result{
+    margin-top:15px;
+    font-size:18px;
+    font-weight:bold;
+    color:#1e3c72
+}
+
+.title{
+    font-weight:bold;
+    color:#2a5298
+}
+
+pre{
+    background:white;
+    padding:10px;
+    border-radius:8px;
+    overflow:auto
+}
+
+.footer{
+    margin-top:20px;
+    font-size:14px;
+    color:#777
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>💻 Solver Métodos Numéricos PRO+</h1>
+<p class="subtitle">Resuelve sistemas paso a paso de forma clara y automática</p>
+
+<hr>
+
+<h3>1️⃣ Selecciona el tamaño del sistema</h3>
+<select id="n" onchange="crear()">
+<option>2</option>
+<option selected>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+</select>
+
+<h3>2️⃣ Ingresa la matriz A</h3>
+<div id="matriz"></div>
+
+<h3>3️⃣ Ingresa el vector b</h3>
+<div id="vector"></div>
+
+<h3>4️⃣ Elige el método</h3>
+<select id="metodo">
+<option value="doolittle">Doolittle (LU)</option>
+<option value="crout">Crout (LU)</option>
+<option value="cholesky">Cholesky</option>
+<option value="jacobi">Jacobi</option>
+<option value="seidel">Gauss-Seidel</option>
+</select>
+
+<br>
+<button onclick="resolver()">🚀 Resolver Sistema</button>
+
+<div class="result" id="res"></div>
+<div class="section-box" id="detalles"></div>
+
+<div class="footer">
+👩‍💻 Creado por: <b>Erika Fabiola Barrionuevo Chavez</b>
+</div>
+
+</div>
+
+<script>
+
+function crear(){
+let n=parseInt(document.getElementById("n").value);
+let m="";
+
+for(let i=0;i<n;i++){
+    for(let j=0;j<n;j++){
+        m+=`<input id=a${i}${j} placeholder="a${i+1}${j+1}">`;
+    }
+    m+="<br>";
+}
+
+document.getElementById("matriz").innerHTML=m;
+
+let b="";
+for(let i=0;i<n;i++){
+    b+=`<input id=b${i} placeholder="b${i+1}">`;
+}
+
+document.getElementById("vector").innerHTML=b;
+}
+
+let nSel=document.getElementById("n");
+crear();
+
+function getA(){
+let n=parseInt(nSel.value),A=[];
+for(let i=0;i<n;i++){
+    A[i]=[];
+    for(let j=0;j<n;j++){
+        let val=parseFloat(document.getElementById(`a${i}${j}`).value);
+        if(isNaN(val)) return null;
+        A[i][j]=val;
+    }
+}
+return A;
+}
+
+function getB(){
+let n=parseInt(nSel.value),b=[];
+for(let i=0;i<n;i++){
+    let val=parseFloat(document.getElementById(`b${i}`).value);
+    if(isNaN(val)) return null;
+    b[i]=val;
+}
+return b;
+}
+
+function formatM(M){
+return M.map(r=>r.map(v=>v.toFixed(3)).join("\t")).join("\n");
+}
+
+function resolver(){
+
+let A=getA(), b=getB();
+
+if(!A || !b){
+    alert("⚠️ Por favor completa todos los campos correctamente");
+    return;
+}
+
+let met=document.getElementById("metodo").value;
+let x, html="";
+
+if(met=="doolittle"){
+ let r=doolittle(A,b);
+ x=r.x;
+ html=`<span class='title'>Descomposición LU (Doolittle)</span><pre>${r.steps}</pre>
+ <span class='title'>Matriz L</span><pre>${formatM(r.L)}</pre>
+ <span class='title'>Matriz U</span><pre>${formatM(r.U)}</pre>`;
+}
+
+if(met=="crout"){
+ let r=crout(A,b);
+ x=r.x;
+ html=`<span class='title'>Descomposición LU (Crout)</span><pre>${r.steps}</pre>
+ <span class='title'>Matriz L</span><pre>${formatM(r.L)}</pre>
+ <span class='title'>Matriz U</span><pre>${formatM(r.U)}</pre>`;
+}
+
+if(met=="cholesky"){
+ let r=cholesky(A,b);
+ x=r.x;
+ html=`<span class='title'>Factorización Cholesky</span><pre>${r.steps}</pre>
+ <span class='title'>Matriz L</span><pre>${formatM(r.L)}</pre>`;
+}
+
+if(met=="jacobi"){
+ let r=jacobi(A,b);
+ x=r.x;
+ html=`<span class='title'>Iteraciones Jacobi</span><pre>${r.steps}</pre>`;
+}
+
+if(met=="seidel"){
+ let r=seidel(A,b);
+ x=r.x;
+ html=`<span class='title'>Iteraciones Gauss-Seidel</span><pre>${r.steps}</pre>`;
+}
+
+document.getElementById("res").innerHTML=
+"📌 Solución:<br>" + x.map((v,i)=>`x${i+1} = ${v.toFixed(4)}`).join("<br>");
+
+document.getElementById("detalles").innerHTML=html;
+}
+
+/* === MÉTODOS (igual que tu código original) === */
+
+function doolittle(A,b){
+let n=A.length,L=Array.from({length:n},()=>Array(n).fill(0)),
+U=Array.from({length:n},()=>Array(n).fill(0)),steps="";
+for(let i=0;i<n;i++)L[i][i]=1;
+
+for(let j=0;j<n;j++){
+for(let i=0;i<=j;i++){
+let sum=0;
+for(let k=0;k<i;k++)sum+=L[i][k]*U[k][j];
+U[i][j]=A[i][j]-sum;
+steps+=`U[${i}${j}] = ${U[i][j]}\n`;
+}
+for(let i=j;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++)sum+=L[i][k]*U[k][j];
+L[i][j]=(A[i][j]-sum)/U[j][j];
+steps+=`L[${i}${j}] = ${L[i][j]}\n`;
+}
+}
+return {x:solveLU(L,U,b),L,U,steps};
+}
+
+function crout(A,b){
+let n=A.length,L=Array.from({length:n},()=>Array(n).fill(0)),
+U=Array.from({length:n},()=>Array(n).fill(0)),steps="";
+for(let j=0;j<n;j++){
+U[j][j]=1;
+for(let i=j;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++)sum+=L[i][k]*U[k][j];
+L[i][j]=A[i][j]-sum;
+steps+=`L[${i}${j}] = ${L[i][j]}\n`;
+}
+for(let i=j+1;i<n;i++){
+let sum=0;
+for(let k=0;k<j;k++)sum+=L[j][k]*U[k][i];
+U[j][i]=(A[j][i]-sum)/L[j][j];
+steps+=`U[${j}${i}] = ${U[j][i]}\n`;
+}
+}
+return {x:solveLU(L,U,b),L,U,steps};
+}
+
+function cholesky(A,b){
+let n=A.length,L=Array.from({length:n},()=>Array(n).fill(0)),steps="";
+for(let i=0;i<n;i++){
+for(let j=0;j<=i;j++){
+let sum=0;
+for(let k=0;k<j;k++)sum+=L[i][k]*L[j][k];
+if(i==j){
+L[i][j]=Math.sqrt(A[i][i]-sum);
+steps+=`L[${i}${j}] = ${L[i][j]}\n`;
+}else{
+L[i][j]=(A[i][j]-sum)/L[j][j];
+steps+=`L[${i}${j}] = ${L[i][j]}\n`;
+}
+}
+}
+return {x:backwardTrans(L,forward(L,b)),L,steps};
+}
+
+function jacobi(A,b){
+let n=A.length,x=new Array(n).fill(0),steps="";
+for(let k=0;k<10;k++){
+let xN=[];
+for(let i=0;i<n;i++){
+let sum=b[i];
+for(let j=0;j<n;j++)if(i!=j)sum-=A[i][j]*x[j];
+xN[i]=sum/A[i][i];
+}
+steps+=`Iter ${k+1}: ${xN.map(v=>v.toFixed(3)).join(', ')}\n`;
+x=[...xN];
+}
+return {x,steps};
+}
+
+function seidel(A,b){
+let n=A.length,x=new Array(n).fill(0),steps="";
+for(let k=0;k<10;k++){
+for(let i=0;i<n;i++){
+let sum=b[i];
+for(let j=0;j<n;j++)if(i!=j)sum-=A[i][j]*x[j];
+x[i]=sum/A[i][i];
+}
+steps+=`Iter ${k+1}: ${x.map(v=>v.toFixed(3)).join(', ')}\n`;
+}
+return {x,steps};
+}
+
+function solveLU(L,U,b){return backward(U,forward(L,b))}
+function forward(L,b){
+let n=L.length,y=[];
+for(let i=0;i<n;i++){
+let sum=0;
+for(let k=0;k<i;k++)sum+=L[i][k]*y[k];
+y[i]=(b[i]-sum)/L[i][i];
+}
+return y;
+}
+
+function backward(U,y){
+let n=U.length,x=[];
+for(let i=n-1;i>=0;i--){
+let sum=0;
+for(let k=i+1;k<n;k++)sum+=U[i][k]*x[k];
+x[i]=(y[i]-sum)/U[i][i];
+}
+return x;
+}
+
+function backwardTrans(L,y){
+let n=L.length,x=[];
+for(let i=n-1;i>=0;i--){
+let sum=0;
+for(let k=i+1;k<n;k++)sum+=L[k][i]*x[k];
+x[i]=(y[i]-sum)/L[i][i];
+}
+return x;
+}
+
+</script>
+
+</body>
+</html>
